@@ -37,39 +37,36 @@ class CombatScreen extends StatelessWidget {
             right: 20,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // Directional Controls
-                Row(
+                // Movement Cluster
+                Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildControlButton(
-                      Icons.arrow_back,
-                      () => game.movePlayer(-1),
-                      () => game.stopPlayer(),
-                    ),
-                    const SizedBox(width: 10),
-                    _buildControlButton(
-                      Icons.arrow_forward,
-                      () => game.movePlayer(1),
-                      () => game.stopPlayer(),
+                    _buildControlButton(Icons.keyboard_double_arrow_up, () => game.jumpPlayer(), null, color: Colors.greenAccent),
+                    const SizedBox(height: 15),
+                    Row(
+                      children: [
+                        _buildControlButton(Icons.chevron_left, () => game.movePlayer(-1), () => game.stopPlayer()),
+                        const SizedBox(width: 15),
+                        _buildControlButton(Icons.chevron_right, () => game.movePlayer(1), () => game.stopPlayer()),
+                      ],
                     ),
                   ],
                 ),
-                // Action Controls
-                Row(
+                // Action Cluster
+                Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildControlButton(
-                      Icons.shield,
-                      () => game.playerBlock(true),
-                      () => game.playerBlock(false),
-                      color: Colors.blue,
+                    Row(
+                      children: [
+                        _buildControlButton(Icons.shield_outlined, () => game.playerBlock(true), () => game.playerBlock(false), color: Colors.blueAccent),
+                        const SizedBox(width: 15),
+                        _buildControlButton(Icons.front_hand, () => game.playerAttack(), null, color: Colors.redAccent),
+                      ],
                     ),
-                    const SizedBox(width: 10),
-                    _buildControlButton(
-                      Icons.sports_mma,
-                      () => game.playerAttack(),
-                      null,
-                      color: Colors.red,
-                    ),
+                    const SizedBox(height: 15),
+                    _buildControlButton(Icons.kitesurfing, () => game.playerKick(), null, color: Colors.orangeAccent),
                   ],
                 ),
               ],
@@ -78,11 +75,19 @@ class CombatScreen extends StatelessWidget {
 
           // Back Button / Exit
           Positioned(
-            top: 10,
-            left: 10,
-            child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
-              onPressed: () => Get.back(),
+            top: 20,
+            left: 20,
+            child: GestureDetector(
+              onTap: () => Get.back(),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.red.withOpacity(0.5)),
+                ),
+                child: const Icon(Icons.close, color: Colors.white, size: 24),
+              ),
             ),
           ),
         ],
@@ -98,46 +103,62 @@ class CombatScreen extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 2),
         ),
         const SizedBox(height: 4),
         Container(
-          width: 150,
-          height: 15,
+          width: 160,
+          height: 12,
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.white),
-            borderRadius: BorderRadius.circular(4),
+            color: Colors.black38,
+            border: Border.all(color: color.withOpacity(0.5)),
+            borderRadius: BorderRadius.circular(2),
+            boxShadow: [
+              BoxShadow(color: color.withOpacity(0.2), blurRadius: 4, spreadRadius: 1),
+            ],
           ),
           child: Obx(() {
             double value = isPlayer
                 ? GameController.instance.currentHealth.value
                 : GameController.instance.opponentHealth.value;
-            // Assuming max health 100 for normalization, but player can have more
-            double percent =
-                (value /
-                        (isPlayer
-                            ? GameController
-                                  .instance
-                                  .selectedCharacter
-                                  .value
-                                  .health
-                            : 100.0))
-                    .clamp(0.0, 1.0);
-            return LinearProgressIndicator(
-              value: percent,
-              backgroundColor: Colors.white12,
-              valueColor: AlwaysStoppedAnimation<Color>(color),
+            double maxH = isPlayer
+                ? GameController.instance.selectedCharacter.value.health
+                : 100.0;
+            double percent = (value / maxH).clamp(0.0, 1.0);
+            return Stack(
+              children: [
+                LinearProgressIndicator(
+                  value: percent,
+                  backgroundColor: Colors.transparent,
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                ),
+                if (percent > 0)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.white.withOpacity(0.3), Colors.transparent],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             );
           }),
         ),
         if (isPlayer) const SizedBox(height: 4),
         if (isPlayer)
           Obx(
-            () => Text(
-              'STAMINA: ${GameController.instance.currentStamina.value.toInt()}',
-              style: const TextStyle(fontSize: 10, color: Colors.blue),
+            () => Container(
+            width: 160,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'ENERGY: ${GameController.instance.currentStamina.value.toInt()}%', 
+              style: const TextStyle(fontSize: 10, color: Colors.blueAccent, fontWeight: FontWeight.bold)
             ),
-          ),
+          )),
       ],
     );
   }
@@ -146,19 +167,58 @@ class CombatScreen extends StatelessWidget {
     IconData icon,
     VoidCallback onPressDown,
     VoidCallback? onPressUp, {
-    Color color = Colors.grey,
+    Color color = Colors.white,
   }) {
+    return _ControlItem(icon: icon, color: color, onPressDown: onPressDown, onPressUp: onPressUp);
+  }
+}
+
+class _ControlItem extends StatefulWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback onPressDown;
+  final VoidCallback? onPressUp;
+
+  const _ControlItem({required this.icon, required this.color, required this.onPressDown, this.onPressUp});
+
+  @override
+  State<_ControlItem> createState() => _ControlItemState();
+}
+
+class _ControlItemState extends State<_ControlItem> {
+  bool isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => onPressDown(),
-      onTapUp: (_) => onPressUp?.call(),
-      child: Container(
-        padding: const EdgeInsets.all(15),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.5),
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 2),
+      onTapDown: (_) {
+        setState(() => isPressed = true);
+        widget.onPressDown();
+      },
+      onTapUp: (_) {
+        setState(() => isPressed = false);
+        widget.onPressUp?.call();
+      },
+      onTapCancel: () {
+        setState(() => isPressed = false);
+        widget.onPressUp?.call();
+      },
+      child: AnimatedScale(
+        scale: isPressed ? 0.9 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: isPressed ? widget.color.withOpacity(0.4) : Colors.black.withOpacity(0.3),
+            shape: BoxShape.circle,
+            border: Border.all(color: isPressed ? Colors.white : widget.color.withOpacity(0.6), width: 2),
+            boxShadow: [
+              if (isPressed)
+                BoxShadow(color: widget.color.withOpacity(0.5), blurRadius: 15, spreadRadius: 2),
+            ],
+          ),
+          child: Icon(widget.icon, color: Colors.white, size: 32),
         ),
-        child: Icon(icon, color: Colors.white, size: 30),
       ),
     );
   }

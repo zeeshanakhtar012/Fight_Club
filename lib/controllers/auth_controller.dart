@@ -23,6 +23,9 @@ class AuthController extends GetxController {
   }
 
   _setInitialScreen(User? user) async {
+    // Add a slight delay to allow Splash Screen to be visible
+    await Future.delayed(const Duration(seconds: 2));
+    
     if (user == null) {
       Get.offAllNamed('/login');
     } else {
