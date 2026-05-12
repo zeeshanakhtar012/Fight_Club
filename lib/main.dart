@@ -18,16 +18,11 @@ import 'screens/admin_dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // NOTE: User will connect Firebase manually.
-  // We initialize with default options if available or just wrap in try-catch for now.
   try {
     await Firebase.initializeApp();
   } catch (e) {
     print("Firebase initialization error (expected if not yet configured): $e");
   }
-
-  // Initialize Controllers
   Get.put(AuthController());
   Get.put(DatabaseController());
   Get.put(GameController());
