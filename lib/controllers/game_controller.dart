@@ -6,7 +6,6 @@ class GameController extends GetxController {
 
   var selectedCharacter = CharacterStats.archetypes[0].obs;
   
-  // Current Match Stats
   var currentHealth = 100.0.obs;
   var currentStamina = 100.0.obs;
   var opponentHealth = 100.0.obs;
@@ -15,7 +14,7 @@ class GameController extends GetxController {
   var totalAttempts = 0.obs;
   
   var isMatchOver = false.obs;
-  var matchResult = "".obs; // "win" or "loss"
+  var matchResult = "".obs;
 
   void selectCharacter(CharacterStats stats) {
     selectedCharacter.value = stats;
@@ -24,7 +23,7 @@ class GameController extends GetxController {
   void startMatch() {
     currentHealth.value = selectedCharacter.value.health;
     currentStamina.value = selectedCharacter.value.stamina;
-    opponentHealth.value = 100.0; // Standard AI health
+    opponentHealth.value = 100.0;
     totalHits.value = 0;
     totalAttempts.value = 0;
     isMatchOver.value = false;

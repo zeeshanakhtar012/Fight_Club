@@ -82,7 +82,6 @@ class FightClubGame extends FlameGame with HasCollisionDetection {
   }
 
   void shakeCamera() {
-    // Correct way to shake camera in Flame 1.x: add a MoveEffect to the viewfinder
     camera.viewfinder.add(
       MoveEffect.by(Vector2(4, 4), ZigzagEffectController(period: 0.1)),
     );
@@ -111,13 +110,11 @@ class RobotFighter extends PositionComponent
   static const double gravity = 900;
   static const double jumpForce = -450;
   late double groundY;
-
-  // AI Specifics
-  String aiState = "Idle"; // Approaching, Spacing, Retreating
+  String aiState = "Idle";
   double aiActionTimer = 0;
   double targetDistance = 60.0;
 
-  int facingDirection = 1; // 1 for Right, -1 for Left
+  int facingDirection = 1;
 
   RobotFighter({required this.isPlayer, required this.color, this.bulk = 1.0});
 
@@ -129,23 +126,19 @@ class RobotFighter extends PositionComponent
         : 100.0;
     targetDistance = isPlayer
         ? 60.0
-        : (bulk > 1.2 ? 40.0 : 70.0); // Tank AI stays closer
+        : (bulk > 1.2 ? 40.0 : 70.0);
     groundY = position.y;
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-
-    // Facing logic
     RobotFighter target = isPlayer ? gameRef.opponent : gameRef.player;
     facingDirection = target.position.x > position.x ? 1 : -1;
 
     if (hitFlashTimer > 0) {
       hitFlashTimer -= dt;
     }
-
-    // Jump Physics
     if (position.y < groundY || yVelocity != 0) {
       yVelocity += gravity * dt;
       position.y += yVelocity * dt;
@@ -159,18 +152,15 @@ class RobotFighter extends PositionComponent
     if (!isPlayer) {
       _updateAI(dt);
     } else {
-      // Player Movement
       position.x += walkDirection * speed * dt;
       position.x = position.x.clamp(0.0, gameRef.size.x - size.x);
 
       if (walkDirection != 0) {
         walkCycle += dt * 12;
       } else {
-        walkCycle = (walkCycle % (2 * pi)) * 0.9; // Smooth stop
+        walkCycle = (walkCycle % (2 * pi)) * 0.9;
       }
     }
-
-    // Animations
     if (isAttacking) {
       attackProgress += dt * 6;
       if (attackProgress >= 1.0) {
@@ -185,8 +175,6 @@ class RobotFighter extends PositionComponent
         kickProgress = 0;
       }
     }
-
-    // Stamina Regen
     if (isPlayer && !isAttacking && !isKicking && !isBlocking) {
       double regenRate = 12.0;
       double newStamina =
@@ -207,7 +195,7 @@ class RobotFighter extends PositionComponent
   void _updateAI(double dt) {
     aiActionTimer -= dt;
     double playerX = gameRef.player.position.x;
-    double dist = (position.x - playerX).abs() - 40; // effective gap
+    double dist = (position.x - playerX).abs() - 40;
 
     // AI State Machine
     if (aiActionTimer <= 0) {
@@ -221,14 +209,10 @@ class RobotFighter extends PositionComponent
         aiState = "Spacing";
         aiActionTimer = 0.4 + Random().nextDouble();
       }
-
-      // Randomly Jump
       if (Random().nextDouble() < 0.2 && position.y >= groundY) {
         jump();
       }
     }
-
-    // Exec Movement
     if (aiState == "Approaching") {
       walkDirection = position.x > playerX ? -1 : 1;
     } else if (aiState == "Retreating") {
@@ -240,8 +224,6 @@ class RobotFighter extends PositionComponent
     position.x += walkDirection * (speed * 0.8) * dt;
     position.x = position.x.clamp(0.0, gameRef.size.x - size.x);
     walkCycle += dt * 10;
-
-    // Smart Attack Logic (Punch or Kick)
     if (dist < 80 &&
         !isAttacking &&
         !isKicking &&
@@ -307,7 +289,6 @@ class RobotFighter extends PositionComponent
     Future.delayed(Duration(milliseconds: delayMs), () {
       RobotFighter target = isPlayer ? gameRef.opponent : gameRef.player;
       double dist = (target.position.x - position.x).abs();
-      // Also check vertical distance
       double yDist = (target.position.y - position.y).abs();
 
       if (dist < range && yDist < 50) {
@@ -334,8 +315,6 @@ class RobotFighter extends PositionComponent
     } else {
       GameController.instance.updateStats(opponentHealthVal: health);
     }
-
-    // Knockback away from opponent
     RobotFighter target = isPlayer ? gameRef.opponent : gameRef.player;
     double kbDir = position.x > target.position.x ? 1 : -1;
     position.x += kbDir * (20 / bulk);
@@ -343,7 +322,6 @@ class RobotFighter extends PositionComponent
 
   @override
   void render(Canvas canvas) {
-    // Safety check for size
     if (size.x <= 0 || size.y <= 0) return;
 
     final paint = Paint()
@@ -354,8 +332,6 @@ class RobotFighter extends PositionComponent
       ..color = Colors.white.withOpacity(0.3)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
-
-    // Flip the canvas if facing left
     canvas.save();
     if (facingDirection == -1) {
       canvas.translate(size.x, 0);
@@ -365,10 +341,7 @@ class RobotFighter extends PositionComponent
     double centerX = size.x / 2;
     double bodyWidth = 42 * bulk;
     double headSize = 22;
-
-    // 1. Legs with Joints
     double legOffset = sin(walkCycle) * 18;
-    // Kick leg animation
     double kickLegSwing = isKicking ? (sin(kickProgress * pi) * 60) : 0;
 
     void drawLeg(double xPos, bool isRightLeg) {
@@ -379,12 +352,8 @@ class RobotFighter extends PositionComponent
         canvas.rotate(-kickLegSwing * pi / 180);
         canvas.translate(-(xPos + 6), -70);
       }
-
-      // Thigh
       canvas.drawRect(Rect.fromLTWH(xPos, 70, 12, 15), paint);
-      // Knee joint
       canvas.drawCircle(Offset(xPos + 6, 85), 4, detailPaint);
-      // Shin
       canvas.drawRect(
         Rect.fromLTWH(
           xPos,
@@ -400,7 +369,6 @@ class RobotFighter extends PositionComponent
     drawLeg(centerX - 18, false);
     drawLeg(centerX + 6, true);
 
-    // 2. Torso with Energy Core
     final torsoRect = Rect.fromCenter(
       center: Offset(centerX, 45),
       width: bodyWidth,
@@ -410,8 +378,6 @@ class RobotFighter extends PositionComponent
       RRect.fromRectAndRadius(torsoRect, const Radius.circular(10)),
       paint,
     );
-
-    // Armor Plating lines
     canvas.drawPath(
       Path()
         ..moveTo(centerX - bodyWidth / 2 + 5, 30)
@@ -420,8 +386,6 @@ class RobotFighter extends PositionComponent
         ..lineTo(centerX + bodyWidth / 2 - 5, 55),
       detailPaint,
     );
-
-    // Energy Core Glow
     double corePulse = (sin(gameRef.elapsedTime() * 5) + 1) / 2;
     canvas.drawCircle(
       Offset(centerX, 45),

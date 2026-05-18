@@ -49,8 +49,6 @@ class AuthController extends GetxController {
     try {
       UserCredential credential = await _auth.createUserWithEmailAndPassword(
           email: email, password: password);
-      
-      // Create profile in Firestore
       UserProfile newProfile = UserProfile(
         userId: credential.user!.uid,
         username: username,

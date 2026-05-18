@@ -54,7 +54,6 @@ class DatabaseController extends GetxController {
       if (doc.exists) {
         gameConfig.value = doc.data()!;
       } else {
-        // Default values if not set
         gameConfig.value = {
           'maxHealth': 100.0,
           'strengthMultiplier': 1.0,
