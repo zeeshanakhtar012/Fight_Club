@@ -21,7 +21,7 @@ void main() async {
   try {
     await Firebase.initializeApp();
   } catch (e) {
-    print("Firebase initialization error (expected if not yet configured): $e");
+    debugPrint("Firebase initialization error (expected if not yet configured): $e");
   }
   Get.put(AuthController());
   Get.put(DatabaseController());
